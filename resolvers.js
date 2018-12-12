@@ -9,9 +9,12 @@ const expose = item => Object.assign(item, item.serialize({ shallow: true }));
 
 module.exports = {
   Query: {
-    articles: async (_, {}, { dataSources }) => {
+    articles: async (_, { categorie, subCategorie }, { dataSources }) => {
+      console.log(subCategorie);
       return JSON.parse(
-        JSON.stringify(await models.Article.where("active", true).fetchAll()),
+        JSON.stringify(
+          await models.Article.where("sub_categorie", subCategorie).fetchAll(),
+        ),
       );
     },
     categories: async (_, {}, { dataSources }) => {
@@ -19,10 +22,11 @@ module.exports = {
         JSON.stringify(await models.Category.where("active", true).fetchAll()),
       );
     },
-    sub_categories: async (_, {}, { dataSources }) => {
+    sub_categories: async (_, { categorie }, { dataSources }) => {
+      console.log("oui", categorie);
       return JSON.parse(
         JSON.stringify(
-          await models.Sub_Category.where("active", true).fetchAll(),
+          await models.Sub_Category.where("categorie", categorie).fetchAll(),
         ),
       );
     },

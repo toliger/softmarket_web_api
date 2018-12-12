@@ -24,8 +24,8 @@ const typeDefs = gql`
   }
 
   type Query {
-    articles: [Article]
-    sub_categories: [Sub_category]
+    articles(categorie: String!, subCategorie: String!): [Article]
+    sub_categories(categorie: String!): [Sub_category]
     categories: [Category]
   }
 
