@@ -64,13 +64,16 @@ module.exports = {
 
       let articles = [];
       for (i in u_articles) {
-        let a = JSON.parse(
-          JSON.stringify(
-            await models.Article.where("name", u_articles[i].article).fetch(),
-          ),
-        );
-        a.amount = u_articles[i].amount;
-        articles.push(a);
+        let a = await models.Article.where(
+          "name",
+          u_articles[i].article,
+        ).fetch();
+
+        if (a) {
+          a = JSON.parse(JSON.stringify(a));
+          a.amount = u_articles[i].amount;
+          articles.push(a);
+        }
       }
 
       let articles_price = 0;
@@ -79,10 +82,10 @@ module.exports = {
         articles_price += articles[i].price * articles[i].amount;
       }
 
-      let total = articles_price + 5 - coupons_reduc;
+      let total = articles_price - coupons_reduc;
       return { coupons, articles, articles_price, coupons_reduc, total };
     },
-    fdp_estimate: async (_, { country, state }, { dataSources }) => {
+    estimate: async (_, { country, state }, { dataSources }) => {
       let fdp = JSON.parse(
         JSON.stringify(await models.Fdp.where("country", country).fetch()),
       );
@@ -155,15 +158,37 @@ module.exports = {
       }
     },
     addarticle_basket: async (_, { uuid }, { dataSources }) => {
-      try {
-        const user = await new models.Basket_Article({
-          user: "AAA",
-          article: uuid,
-        }).save();
-        return true;
-      } catch (e) {
-        throw new Error("could not create sub categorie", e);
-      }
+      console.log(uuid);
+      models.Basket_Article.where("user", "AAA")
+        .where("article", uuid)
+        .fetch()
+        .then(async model => {
+          console.log(model);
+          if (model) {
+            let amount = JSON.parse(JSON.stringify(model)).amount + 1;
+            await model.set("amount", amount).save();
+            return true;
+          } else {
+            try {
+              const user = await new models.Basket_Article({
+                user: "AAA",
+                article: uuid,
+              }).save();
+              return true;
+            } catch (e) {
+              throw new Error("could not create sub categorie", e);
+            }
+          }
+        });
+    },
+    rmarticle_basket: async (_, { uuid }, { dataSources }) => {
+      console.log(uuid);
+      models.Basket_Article.where("user", "AAA")
+        .where("article", uuid)
+        .destroy()
+        .then(async model => {
+          return true;
+        });
     },
     addcoupon_basket: async (_, { uuid }, { dataSources }) => {
       try {
@@ -175,6 +200,14 @@ module.exports = {
       } catch (e) {
         throw new Error("could not create sub categorie", e);
       }
+    },
+    rmcoupon_basket: async (_, { uuid }, { dataSources }) => {
+      models.Basket_Coupon.where("user", "AAA")
+        .where("coupon", uuid)
+        .destroy()
+        .then(async model => {
+          return true;
+        });
     },
   },
 };

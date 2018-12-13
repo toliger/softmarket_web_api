@@ -53,7 +53,7 @@ const typeDefs = gql`
     sub_categories(categorie: String!): [Sub_category]
     categories: [Category]
     basket: Basket
-    fdp_estimate(country: String!, state: String!): Int
+    estimate(country: String!, state: String!): Int
   }
 
   type Mutation {
@@ -64,7 +64,16 @@ const typeDefs = gql`
     addSub_Category(name: String!, description: String!): Boolean
     addarticle_basket(uuid: String!): Boolean
     addcoupon_basket(uuid: String!): Boolean
-    removeitem_basket(uuid: String): Boolean
+    rmarticle_basket(uuid: String!): Boolean
+    rmcoupon_basket(uuid: String!): Boolean
+    addadress(
+      country: String!
+      state: String!
+      zipcode: Int!
+      ville: String!
+      num: String!
+      rue: String!
+    ): Boolean
   }
 `;
 
