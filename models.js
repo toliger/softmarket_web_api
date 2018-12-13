@@ -17,9 +17,29 @@ const Category = bookshelf.Model.extend({
   tableName: "article_categories",
 });
 
+const Basket_Article = bookshelf.Model.extend({
+  tableName: "basket_articles",
+});
+
+const Basket_Coupon = bookshelf.Model.extend({
+  tableName: "basket_coupons",
+});
+
+const Coupon = bookshelf.Model.extend({
+  tableName: "coupons",
+});
+
+const Fdp = bookshelf.Model.extend({
+  tableName: "basket_fdp",
+});
+
 module.exports = {
   User,
   Article,
   Sub_Category,
   Category,
+  Basket_Article,
+  Basket_Coupon,
+  Coupon,
+  Fdp,
 };

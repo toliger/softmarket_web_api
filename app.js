@@ -7,7 +7,9 @@ const typeDefs = gql`
   type Article {
     id: String
     name: String
+    amount: Int
     description: String
+    price: Int
   }
 
   type Sub_category {
@@ -23,10 +25,35 @@ const typeDefs = gql`
     sub_categories: [Sub_category]
   }
 
+  type Card {
+    name: String
+    available: Boolean
+    amount: Int
+  }
+
+  type Coupon {
+    id: String
+    name: String
+    price: Int
+    description: String
+  }
+
+  type Basket {
+    coupons: [Coupon]
+    articles: [Article]
+    articles_price: Int
+    coupons_reduc: Int
+    total: Int
+    fdp: Int
+  }
+
   type Query {
     articles(categorie: String!, subCategorie: String!): [Article]
+    article(uuid: String!, amount: Int!): Article
     sub_categories(categorie: String!): [Sub_category]
     categories: [Category]
+    basket: Basket
+    fdp_estimate(country: String!, state: String!): Int
   }
 
   type Mutation {
@@ -35,6 +62,9 @@ const typeDefs = gql`
     addArticle(name: String!, description: String!): Boolean
     addCategory(name: String!, description: String!): Boolean
     addSub_Category(name: String!, description: String!): Boolean
+    addarticle_basket(uuid: String!): Boolean
+    addcoupon_basket(uuid: String!): Boolean
+    removeitem_basket(uuid: String): Boolean
   }
 `;
 
