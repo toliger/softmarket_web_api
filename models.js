@@ -29,6 +29,10 @@ const Coupon = bookshelf.Model.extend({
   tableName: "coupons",
 });
 
+const Command = bookshelf.Model.extend({
+  tableName: "commands",
+});
+
 const Fdp = bookshelf.Model.extend({
   tableName: "basket_fdp",
 });
@@ -42,4 +46,5 @@ module.exports = {
   Basket_Coupon,
   Coupon,
   Fdp,
+  Command,
 };

@@ -47,6 +47,17 @@ const typeDefs = gql`
     fdp: Int
   }
 
+  type Command {
+    id: String
+    name: String
+    total: Int
+    fdp: Int
+    created_at: String
+    update_at: String
+    adress: String
+    payment: String
+  }
+
   type Query {
     articles(categorie: String!, subCategorie: String!): [Article]
     article(uuid: String!, amount: Int!): Article
@@ -54,6 +65,7 @@ const typeDefs = gql`
     categories: [Category]
     basket: Basket
     estimate(country: String!, state: String!): Int
+    commands: [Command]
   }
 
   type Mutation {
@@ -74,6 +86,7 @@ const typeDefs = gql`
       num: String!
       rue: String!
     ): Boolean
+    command(adress: String!, payment: String!): Boolean
   }
 `;
 
