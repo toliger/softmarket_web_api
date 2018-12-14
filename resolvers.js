@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const jwt_decode = require("jwt-decode");
 const bcrypt = require("bcryptjs");
 const uuid = require("uuid/v1");
 const models = require("./models");
@@ -7,9 +8,14 @@ const secret = process.env.JWT_SECRET;
 
 const expose = item => Object.assign(item, item.serialize({ shallow: true }));
 
-async function getbasket() {
+function gettok(ctx) {
+  let tok = ctx.headers["authorization"].split(" ");
+  return jwt_decode(tok[1]);
+}
+
+async function getbasket(uid) {
   let u_coupons = JSON.parse(
-    JSON.stringify(await models.Basket_Coupon.where("user", "AAA").fetchAll()),
+    JSON.stringify(await models.Basket_Coupon.where("user", uid).fetchAll()),
   );
 
   let coupons = [];
@@ -25,7 +31,7 @@ async function getbasket() {
   }
 
   let u_articles = JSON.parse(
-    JSON.stringify(await models.Basket_Article.where("user", "AAA").fetchAll()),
+    JSON.stringify(await models.Basket_Article.where("user", uid).fetchAll()),
   );
 
   let articles = [];
@@ -50,52 +56,55 @@ async function getbasket() {
 }
 module.exports = {
   Query: {
-    articles: async (_, { categorie, subCategorie }, { dataSources }) => {
+    articles: async (_, { categorie, subCategorie }, ctx) => {
       return JSON.parse(
         JSON.stringify(
           await models.Article.where("sub_categorie", subCategorie).fetchAll(),
         ),
       );
     },
-    categories: async (_, {}, { dataSources }) => {
+    categories: async (_, {}, ctx) => {
       return JSON.parse(
         JSON.stringify(await models.Category.where("active", true).fetchAll()),
       );
     },
-    sub_categories: async (_, { categorie }, { dataSources }) => {
+    sub_categories: async (_, { categorie }, ctx) => {
       return JSON.parse(
         JSON.stringify(
           await models.Sub_Category.where("categorie", categorie).fetchAll(),
         ),
       );
     },
-    article: async (_, { uuid, amount }, { dataSources }) => {
+    article: async (_, { uuid, amount }, ctx) => {
       let res = await models.Article.where("id", uuid).fetch();
       if (res.amount < amount) res.amount = -1;
       else res.amount = amount;
 
       return JSON.parse(JSON.stringify(res));
     },
-    basket: async (_, {}, { dataSources }) => {
-      return getbasket();
+    basket: async (_, {}, ctx) => {
+      return getbasket(gettok(ctx).uid);
     },
-    estimate: async (_, { country, state }, { dataSources }) => {
+    estimate: async (_, { country, state }, ctx) => {
       let fdp = JSON.parse(
         JSON.stringify(await models.Fdp.where("country", country).fetch()),
       );
       console.log(fdp);
       return fdp.price;
     },
-    commands: async (_, {}, { dataSources }) => {
+    commands: async (_, {}, ctx) => {
+      let tok = gettok(ctx);
       let commands = JSON.parse(
-        JSON.stringify(await models.Command.where("user", "AAA").fetchAll()),
+        JSON.stringify(
+          await models.Command.where("user", gettok(ctx).uid).fetchAll(),
+        ),
       );
 
       return commands;
     },
   },
   Mutation: {
-    login: async (_, { email, password }, { dataSources }) => {
+    login: async (_, { email, password }, ctx) => {
       try {
         const user = await models.User.where({
           email,
@@ -110,7 +119,7 @@ module.exports = {
         throw new Error("login failed");
       }
     },
-    register: async (_, { email, password }, { dataSources }) => {
+    register: async (_, { email, password }, ctx) => {
       const hash = bcrypt.hashSync(password, 8);
 
       try {
@@ -125,7 +134,7 @@ module.exports = {
         throw new Error("could not create user: it may already exists");
       }
     },
-    addArticle: async (_, { name, description }, { dataSources }) => {
+    addArticle: async (_, { name, description }, ctx) => {
       try {
         const user = await new models.Article({
           name,
@@ -136,7 +145,7 @@ module.exports = {
         throw new Error("could not create article");
       }
     },
-    addCategory: async (_, { name, description }, { dataSources }) => {
+    addCategory: async (_, { name, description }, ctx) => {
       try {
         const user = await new models.Category({
           name,
@@ -147,7 +156,7 @@ module.exports = {
         throw new Error("could not create categorie", e);
       }
     },
-    addSub_Category: async (_, { name, description }, { dataSources }) => {
+    addSub_Category: async (_, { name, description }, ctx) => {
       try {
         const user = await new models.Sub_Category({
           name,
@@ -158,9 +167,8 @@ module.exports = {
         throw new Error("could not create sub categorie", e);
       }
     },
-    addarticle_basket: async (_, { uuid }, { dataSources }) => {
-      console.log(uuid);
-      models.Basket_Article.where("user", "AAA")
+    addarticle_basket: async (_, { uuid }, ctx) => {
+      models.Basket_Article.where("user", gettok(ctx).uid)
         .where("article", uuid)
         .fetch()
         .then(async model => {
@@ -172,7 +180,7 @@ module.exports = {
           } else {
             try {
               const user = await new models.Basket_Article({
-                user: "AAA",
+                user: gettok(ctx).uid,
                 article: uuid,
               }).save();
               return true;
@@ -182,19 +190,19 @@ module.exports = {
           }
         });
     },
-    rmarticle_basket: async (_, { uuid }, { dataSources }) => {
+    rmarticle_basket: async (_, { uuid }, ctx) => {
       console.log(uuid);
-      models.Basket_Article.where("user", "AAA")
+      models.Basket_Article.where("user", gettok(ctx).uid)
         .where("article", uuid)
         .destroy()
         .then(async model => {
           return true;
         });
     },
-    addcoupon_basket: async (_, { uuid }, { dataSources }) => {
+    addcoupon_basket: async (_, { uuid }, ctx) => {
       try {
         const user = await new models.Basket_Coupon({
-          user: "AAA",
+          user: gettok(ctx).uid,
           coupon: uuid,
         }).save();
         return true;
@@ -202,19 +210,19 @@ module.exports = {
         throw new Error("could not create sub categorie", e);
       }
     },
-    rmcoupon_basket: async (_, { uuid }, { dataSources }) => {
-      models.Basket_Coupon.where("user", "AAA")
+    rmcoupon_basket: async (_, { uuid }, ctx) => {
+      models.Basket_Coupon.where("user", gettok(ctx).uid)
         .where("coupon", uuid)
         .destroy()
         .then(async model => {
           return true;
         });
     },
-    command: async (_, { adress, payment }, { dataSources }) => {
-      const basket = await getbasket();
+    command: async (_, { adress, payment }, ctx) => {
+      const basket = await getbasket(gettok(ctx).uid);
       const user = await new models.Command({
         name: "La bonne commande",
-        user: "AAA",
+        user: gettok(ctx).uid,
         articles: basket.articles,
         total: basket.total,
         fdp: basket.fdp,
